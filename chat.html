@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Health Coach — Chat</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    /* ── Chat-specific styles ── */
+    .chat-main { max-width: 1200px; margin: 0 auto; padding: 10px 28px 20px; display: flex; flex-direction: column; height: calc(100vh - 100px); position: relative; z-index: 1; }
+    .page-title { font-size: 1.5rem; font-weight: 800; background: linear-gradient(135deg, var(--purple-lt), var(--blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .page-sub { color: var(--text-2); font-size: .85rem; margin-top: 4px; margin-bottom: 20px; }
+    
+    .chat-container { display: flex; flex-direction: column; flex: 1; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+    
+    .chat-messages { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth; }
+    .chat-messages::-webkit-scrollbar { width: 6px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+    
+    .msg-wrapper { display: flex; flex-direction: column; max-width: 80%; animation: slideIn 0.3s ease forwards; }
+    .msg-wrapper.user { align-self: flex-end; }
+    .msg-wrapper.bot { align-self: flex-start; }
+    
+    .msg-bubble { padding: 12px 16px; border-radius: 18px; font-size: 0.9rem; line-height: 1.5; word-wrap: break-word; }
+    .msg-wrapper.user .msg-bubble { background: linear-gradient(135deg, var(--purple), var(--blue)); color: white; border-bottom-right-radius: 4px; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.2); }
+    .msg-wrapper.bot .msg-bubble { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); color: var(--text-1); border-bottom-left-radius: 4px; }
+    
+    .msg-bubble p { margin: 0 0 10px 0; }
+    .msg-bubble p:last-child { margin: 0; }
+    .msg-bubble strong { font-weight: 700; color: var(--purple-lt); }
+    .msg-wrapper.user .msg-bubble strong { color: #fff; }
+    
+    .typing-indicator { display: flex; align-items: center; gap: 4px; padding: 12px 16px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); border-radius: 18px; border-bottom-left-radius: 4px; align-self: flex-start; margin-bottom: 16px; display: none; }
+    .typing-indicator.show { display: flex; }
+    .typing-dot { width: 6px; height: 6px; background: var(--text-3); border-radius: 50%; animation: typing 1.4s infinite ease-in-out both; }
+    .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes typing { 0%, 80%, 100% { transform: scale(0); opacity: 0.5; } 40% { transform: scale(1); opacity: 1; } }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .chat-input-area { padding: 16px 24px; background: rgba(0, 0, 0, 0.2); border-top: 1px solid var(--border); display: flex; gap: 12px; align-items: flex-end; }
+    .chat-input { flex: 1; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); border-radius: 24px; color: var(--text-1); font-family: var(--font); font-size: 0.95rem; padding: 14px 20px; outline: none; transition: border-color 0.2s, background 0.2s; resize: none; min-height: 24px; max-height: 120px; overflow-y: hidden; }
+    .chat-input:focus { border-color: var(--purple-lt); background: rgba(255, 255, 255, 0.08); }
+    .chat-input::placeholder { color: var(--text-3); }
+    
+    .btn-send { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--purple), var(--blue)); border: none; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s, opacity 0.2s; flex-shrink: 0; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3); }
+    .btn-send:hover { transform: scale(1.05); }
+    .btn-send:active { transform: scale(0.95); }
+    .btn-send:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+  </style>
+</head>
+<body class="dash-body">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <!-- HEADER -->
+  <header class="dash-header glass">
+    <div class="header-left">
+      <div class="brand-icon small">
+        <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
+          <path d="M16 4C16 4 6 10 6 18C6 23.52 10.48 28 16 28C21.52 28 26 23.52 26 18C26 10 16 4 16 4Z" fill="url(#hg4)"/>
+          <path d="M10 18L13 15L16 20L19 13L22 17" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <defs><linearGradient id="hg4" x1="6" y1="4" x2="26" y2="28" gradientUnits="userSpaceOnUse"><stop stop-color="#a855f7"/><stop offset="1" stop-color="#3b82f6"/></linearGradient></defs>
+        </svg>
+      </div>
+      <span class="brand-name small">AI Health Coach</span>
+    </div>
+    <div class="header-center">
+      <span class="live-badge"><span class="live-dot" style="background:var(--purple-lt)"></span>AI ASSISTANT</span>
+    </div>
+    <div class="header-right">
+      <a href="/dashboard" class="btn-nav-predictions">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </a>
+      <a href="/predictions" class="btn-nav-predictions">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+        Predictions
+      </a>
+      <div class="user-pill">
+        <div class="user-avatar" id="user-avatar">?</div>
+        <span id="user-name-header" class="user-name-text">—</span>
+      </div>
+      <button class="btn-logout" onclick="handleLogout()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logout
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="chat-main">
+    <div>
+      <h1 class="page-title">Health Guidelines Assistant</h1>
+      <p class="page-sub">Ask questions about health protocols, warning signs, and care guidelines.</p>
+    </div>
+
+    <div class="chat-container">
+      <div class="chat-messages" id="chat-messages">
+        <!-- Initial bot message -->
+        <div class="msg-wrapper bot">
+          <div class="msg-bubble">
+            <p>Hello! I'm your AI Health Assistant. I have access to clinical health guidelines and can answer questions about warning signs, protocols, and general care. How can I help you today?</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Typing indicator -->
+      <div class="typing-indicator" id="typing-indicator" style="margin-left: 24px;">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      </div>
+
+      <div class="chat-input-area">
+        <textarea 
+          id="chat-input" 
+          class="chat-input" 
+          placeholder="Ask a health question..." 
+          rows="1"
+          onkeydown="handleKeyDown(event)"
+          oninput="autoResize(this)"
+        ></textarea>
+        <button class="btn-send" id="btn-send" onclick="sendMessage()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const token    = sessionStorage.getItem('token');
+    const username = sessionStorage.getItem('username');
+    if (!token) window.location.href = '/';
+
+    const authHdr = () => ({ 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' });
+
+    document.getElementById('user-name-header').textContent = username;
+    document.getElementById('user-avatar').textContent = (username || '?')[0].toUpperCase();
+
+    const chatInput = document.getElementById('chat-input');
+    const chatMessages = document.getElementById('chat-messages');
+    const btnSend = document.getElementById('btn-send');
+    const typingIndicator = document.getElementById('typing-indicator');
+
+    function autoResize(textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = textarea.scrollHeight + 'px';
+      if(textarea.value === '') textarea.style.height = 'auto';
+    }
+
+    function handleKeyDown(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    }
+
+    function formatText(text) {
+      // Basic markdown bolding
+      return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+    }
+
+    function addMessage(text, sender) {
+      const wrapper = document.createElement('div');
+      wrapper.className = `msg-wrapper ${sender}`;
+      
+      const bubble = document.createElement('div');
+      bubble.className = 'msg-bubble';
+      bubble.innerHTML = `<p>${formatText(text)}</p>`;
+      
+      wrapper.appendChild(bubble);
+      chatMessages.appendChild(wrapper);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const msg = chatInput.value.trim();
+      if (!msg) return;
+
+      // Add user message
+      addMessage(msg, 'user');
+      chatInput.value = '';
+      chatInput.style.height = 'auto';
+      
+      // Disable input and show typing
+      chatInput.disabled = true;
+      btnSend.disabled = true;
+      typingIndicator.classList.add('show');
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: authHdr(),
+          body: JSON.stringify({ message: msg })
+        });
+        
+        const data = await res.json();
+        typingIndicator.classList.remove('show');
+        
+        if (!res.ok) {
+          addMessage("Sorry, I encountered an error: " + (data.error || "Server issue"), 'bot');
+        } else {
+          addMessage(data.reply, 'bot');
+        }
+      } catch (err) {
+        typingIndicator.classList.remove('show');
+        addMessage("Network error. Please try again.", 'bot');
+      } finally {
+        chatInput.disabled = false;
+        btnSend.disabled = false;
+        chatInput.focus();
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+    }
+
+    async function handleLogout() {
+      try { await fetch('/api/logout', { method:'POST', headers: authHdr() }); }
+      finally { sessionStorage.clear(); window.location.href = '/'; }
+    }
+  </script>
+</body>
+</html>

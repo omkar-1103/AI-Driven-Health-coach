@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Health Coach — Dashboard</title>
+  <meta name="description" content="Monitor your real-time heart rate, temperature, blood oxygen, blood pressure, and steps with AI Health Coach." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body class="dash-body">
+
+  <!-- Animated blobs -->
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <!-- ═══════════════ HEADER ═══════════════ -->
+  <header class="dash-header glass">
+    <div class="header-left">
+      <div class="brand-icon small">
+        <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
+          <path d="M16 4C16 4 6 10 6 18C6 23.52 10.48 28 16 28C21.52 28 26 23.52 26 18C26 10 16 4 16 4Z" fill="url(#hg2)"/>
+          <path d="M10 18L13 15L16 20L19 13L22 17" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <defs>
+            <linearGradient id="hg2" x1="6" y1="4" x2="26" y2="28" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#a855f7"/><stop offset="1" stop-color="#3b82f6"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <span class="brand-name small">AI Health Coach</span>
+    </div>
+    <div class="header-center">
+      <span class="live-badge">
+        <span class="live-dot"></span>LIVE
+      </span>
+      <span id="header-date" class="header-date"></span>
+    </div>
+    <div class="header-right">
+      <div class="user-pill">
+        <div class="user-avatar" id="user-avatar">?</div>
+        <span id="user-name-header" class="user-name-text">—</span>
+      </div>
+      <a href="/chat" class="btn-nav-predictions">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg>
+        AI Chat
+      </a>
+      <a href="/predictions" class="btn-nav-predictions">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+        AI Predictions
+      </a>
+      <button id="btn-logout" class="btn-logout" onclick="handleLogout()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logout
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══════════════ MAIN ═══════════════ -->
+  <main class="dash-main">
+
+    <!-- Last updated ticker -->
+    <div class="refresh-bar">
+      <span id="last-updated">Waiting for data…</span>
+      <div class="refresh-progress" id="refresh-progress"></div>
+    </div>
+
+    <!-- ── METRIC CARDS ── -->
+    <section class="cards-grid" aria-label="Health metrics">
+
+      <!-- Heart Rate -->
+      <article class="metric-card glass" id="card-hr">
+        <div class="card-header">
+          <div class="card-icon-wrap hr-color">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+          </div>
+          <div class="card-meta">
+            <h2 class="card-title">Heart Rate</h2>
+            <span class="card-unit">beats / min</span>
+          </div>
+          <div class="card-status-dot" id="hr-status"></div>
+        </div>
+        <div class="card-value-row">
+          <span class="card-value" id="val-hr">—</span>
+          <span class="card-trend" id="trend-hr"></span>
+        </div>
+
+
+        <div class="mini-chart-wrap">
+          <canvas id="chart-hr" height="55"></canvas>
+        </div>
+      </article>
+
+      <!-- Temperature -->
+      <article class="metric-card glass" id="card-temp">
+        <div class="card-header">
+          <div class="card-icon-wrap temp-color">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 14.76V3.5a2.5 2.5 0 00-5 0v11.26a4.5 4.5 0 105 0z"/></svg>
+          </div>
+          <div class="card-meta">
+            <h2 class="card-title">Temperature</h2>
+            <span class="card-unit">degrees Celsius</span>
+          </div>
+          <div class="card-status-dot" id="temp-status"></div>
+        </div>
+        <div class="card-value-row">
+          <span class="card-value" id="val-temp">—</span>
+          <span class="card-trend" id="trend-temp"></span>
+        </div>
+
+
+        <div class="mini-chart-wrap">
+          <canvas id="chart-temp" height="55"></canvas>
+        </div>
+      </article>
+
+      <!-- Blood Oxygen -->
+      <article class="metric-card glass" id="card-spo2">
+        <div class="card-header">
+          <div class="card-icon-wrap spo2-color">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+          </div>
+          <div class="card-meta">
+            <h2 class="card-title">Blood Oxygen</h2>
+            <span class="card-unit">SpO₂ percent</span>
+          </div>
+          <div class="card-status-dot" id="spo2-status"></div>
+        </div>
+        <div class="card-value-row">
+          <span class="card-value" id="val-spo2">—</span>
+          <span class="card-trend" id="trend-spo2"></span>
+        </div>
+
+
+        <div class="mini-chart-wrap">
+          <canvas id="chart-spo2" height="55"></canvas>
+        </div>
+      </article>
+
+      <!-- Blood Pressure -->
+      <article class="metric-card glass" id="card-bp">
+        <div class="card-header">
+          <div class="card-icon-wrap bp-color">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          </div>
+          <div class="card-meta">
+            <h2 class="card-title">Blood Pressure</h2>
+            <span class="card-unit">mmHg (sys / dia)</span>
+          </div>
+          <div class="card-status-dot" id="bp-status"></div>
+        </div>
+        <div class="card-value-row">
+          <span class="card-value bp-compound" id="val-bp">—</span>
+          <span class="card-trend" id="trend-bp"></span>
+        </div>
+
+
+        <div class="mini-chart-wrap">
+          <canvas id="chart-bp" height="55"></canvas>
+        </div>
+      </article>
+
+    </section>
+
+    <!-- ── STEP COUNT ── -->
+    <section class="steps-section">
+      <article class="steps-card glass">
+        <div class="steps-left">
+          <div class="steps-icon-wrap">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+          </div>
+          <div>
+            <h2 class="steps-title">Daily Steps</h2>
+            <p class="steps-sub">Resets every midnight · Today's journey</p>
+          </div>
+        </div>
+        <div class="steps-center">
+          <div class="steps-ring-wrap">
+            <svg class="steps-ring" viewBox="0 0 120 120">
+              <circle class="ring-bg" cx="60" cy="60" r="52" stroke-width="10"/>
+              <circle class="ring-progress" id="ring-progress" cx="60" cy="60" r="52" stroke-width="10"
+                      stroke-dasharray="326.7" stroke-dashoffset="326.7"/>
+            </svg>
+            <div class="steps-ring-text">
+              <span class="steps-big" id="val-steps">0</span>
+              <span class="steps-label">steps</span>
+            </div>
+          </div>
+        </div>
+        <div class="steps-right">
+          <div class="steps-stat">
+            <span class="stat-label">Goal</span>
+            <span class="stat-val">10,000</span>
+          </div>
+          <div class="steps-stat">
+            <span class="stat-label">Remaining</span>
+            <span class="stat-val" id="steps-remaining">10,000</span>
+          </div>
+          <div class="steps-stat">
+            <span class="stat-label">Progress</span>
+            <span class="stat-val" id="steps-pct">0%</span>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ── CHARTS ROW ── -->
+    <section class="charts-section">
+      <h2 class="section-title">Trend Overview — Last 30 Readings</h2>
+      <div class="charts-grid">
+        <div class="chart-card glass">
+          <div class="chart-card-header">
+            <span class="chart-card-dot hr-color-dot"></span>
+            <h3 class="chart-card-title">Heart Rate</h3>
+          </div>
+          <canvas id="chart-hr-big" height="140"></canvas>
+        </div>
+        <div class="chart-card glass">
+          <div class="chart-card-header">
+            <span class="chart-card-dot temp-color-dot"></span>
+            <h3 class="chart-card-title">Body Temperature</h3>
+          </div>
+          <canvas id="chart-temp-big" height="140"></canvas>
+        </div>
+        <div class="chart-card glass">
+          <div class="chart-card-header">
+            <span class="chart-card-dot spo2-color-dot"></span>
+            <h3 class="chart-card-title">Blood Oxygen (SpO₂)</h3>
+          </div>
+          <canvas id="chart-spo2-big" height="140"></canvas>
+        </div>
+        <div class="chart-card glass">
+          <div class="chart-card-header">
+            <span class="chart-card-dot bp-color-dot"></span>
+            <h3 class="chart-card-title">Blood Pressure</h3>
+          </div>
+          <canvas id="chart-bp-big" height="140"></canvas>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Health Coach — Login</title>
+  <meta name="description" content="Log in to AI Health Coach to monitor your real-time wearable health metrics." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="auth-body">
+
+  <!-- Animated background blobs -->
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+
+  <div class="auth-container">
+    <!-- Branding -->
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+          <path d="M16 4C16 4 6 10 6 18C6 23.52 10.48 28 16 28C21.52 28 26 23.52 26 18C26 10 16 4 16 4Z" fill="url(#heartGrad)"/>
+          <path d="M10 18L13 15L16 20L19 13L22 17" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <defs>
+            <linearGradient id="heartGrad" x1="6" y1="4" x2="26" y2="28" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#a855f7"/>
+              <stop offset="1" stop-color="#3b82f6"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <h1 class="brand-name">AI Health Coach</h1>
+      <p class="brand-tagline">Real-time wearable health monitoring</p>
+    </div>
+
+    <!-- Card -->
+    <div class="auth-card glass">
+      <!-- Tabs -->
+      <div class="auth-tabs" role="tablist">
+        <button id="tab-login" class="auth-tab active" role="tab" aria-selected="true" onclick="switchTab('login')">Sign In</button>
+        <button id="tab-register" class="auth-tab" role="tab" aria-selected="false" onclick="switchTab('register')">Register</button>
+        <div class="tab-indicator"></div>
+      </div>
+
+      <!-- Alert banner -->
+      <div id="auth-alert" class="auth-alert hidden" role="alert"></div>
+
+      <!-- ── LOGIN FORM ── -->
+      <form id="form-login" class="auth-form" onsubmit="handleLogin(event)" autocomplete="on">
+        <div class="field-group">
+          <label for="login-username" class="field-label">Username</label>
+          <div class="field-wrap">
+            <span class="field-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7"/></svg>
+            </span>
+            <input id="login-username" type="text" name="username" class="field-input" placeholder="Enter username" required autocomplete="username" />
+          </div>
+        </div>
+        <div class="field-group">
+          <label for="login-password" class="field-label">Password</label>
+          <div class="field-wrap">
+            <span class="field-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            </span>
+            <input id="login-password" type="password" name="password" class="field-input" placeholder="Enter password" required autocomplete="current-password" />
+          </div>
+        </div>
+        <button id="btn-login" type="submit" class="btn-primary">
+          <span class="btn-text">Sign In</span>
+          <span class="btn-loader hidden"></span>
+        </button>
+      </form>
+
+      <!-- ── REGISTER FORM ── -->
+      <form id="form-register" class="auth-form hidden" onsubmit="handleRegister(event)" autocomplete="off">
+        <div class="field-group">
+          <label for="reg-username" class="field-label">Choose a Username</label>
+          <div class="field-wrap">
+            <span class="field-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7"/></svg>
+            </span>
+            <input id="reg-username" type="text" name="username" class="field-input" placeholder="Username (3–20 chars)" required autocomplete="off" minlength="3" maxlength="20" />
+          </div>
+        </div>
+        <div class="field-group">
+          <label for="reg-password" class="field-label">Password</label>
+          <div class="field-wrap">
+            <span class="field-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            </span>
+            <input id="reg-password" type="password" name="password" class="field-input" placeholder="Minimum 6 characters" required autocomplete="new-password" minlength="6" />
+          </div>
+        </div>
+        <div class="field-group">
+          <label for="reg-confirm" class="field-label">Confirm Password</label>
+          <div class="field-wrap">
+            <span class="field-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 01-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 011-.98l7-3a1 1 0 01.7 0l7 3A1 1 0 0120 6z"/></svg>
+            </span>
+            <input id="reg-confirm" type="password" name="confirm" class="field-input" placeholder="Repeat password" required autocomplete="new-password" minlength="6" />
+          </div>
+        </div>
+        <button id="btn-register" type="submit" class="btn-primary">
+          <span class="btn-text">Create Account</span>
+          <span class="btn-loader hidden"></span>
+        </button>
+      </form>
+    </div>
+
+    <p class="auth-footer">© 2025 AI Health Coach — Health at a glance</p>
+  </div>
+
+  <script>
+    // ── Tab switcher ──────────────────────────────────────────────
+    function switchTab(tab) {
+      const isLogin = tab === 'login';
+      document.getElementById('form-login').classList.toggle('hidden', !isLogin);
+      document.getElementById('form-register').classList.toggle('hidden', isLogin);
+      document.getElementById('tab-login').classList.toggle('active', isLogin);
+      document.getElementById('tab-register').classList.toggle('active', !isLogin);
+      document.getElementById('tab-login').setAttribute('aria-selected', isLogin);
+      document.getElementById('tab-register').setAttribute('aria-selected', !isLogin);
+      clearAlert();
+      // Slide indicator
+      const indicator = document.querySelector('.tab-indicator');
+      indicator.style.transform = isLogin ? 'translateX(0)' : 'translateX(100%)';
+    }
+
+    // ── Alert ────────────────────────────────────────────────────
+    function showAlert(msg, type = 'error') {
+      const el = document.getElementById('auth-alert');
+      el.textContent = msg;
+      el.className = `auth-alert ${type}`;
+    }
+    function clearAlert() {
+      const el = document.getElementById('auth-alert');
+      el.className = 'auth-alert hidden';
+    }
+
+    // ── Loader helpers ────────────────────────────────────────────
+    function setLoading(btnId, loading) {
+      const btn = document.getElementById(btnId);
+      btn.querySelector('.btn-text').classList.toggle('hidden', loading);
+      btn.querySelector('.btn-loader').classList.toggle('hidden', !loading);
+      btn.disabled = loading;
+    }
+
+    // ── Login ─────────────────────────────────────────────────────
+    async function handleLogin(e) {
+      e.preventDefault();
+      clearAlert();
+      setLoading('btn-login', true);
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) { showAlert(data.error || 'Login failed.'); return; }
+        sessionStorage.setItem('token', data.token);
+        sessionStorage.setItem('username', data.username);
+        sessionStorage.setItem('user_id', data.user_id);
+        window.location.href = '/dashboard';
+      } catch {
+        showAlert('Network error. Is the server running?');
+      } finally {
+        setLoading('btn-login', false);
+      }
+    }
+
+    // ── Register ──────────────────────────────────────────────────
+    async function handleRegister(e) {
+      e.preventDefault();
+      clearAlert();
+      const password = document.getElementById('reg-password').value;
+      const confirm  = document.getElementById('reg-confirm').value;
+      if (password !== confirm) { showAlert('Passwords do not match.'); return; }
+      setLoading('btn-register', true);
+      const username = document.getElementById('reg-username').value.trim();
+      try {
+        const res = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) { showAlert(data.error || 'Registration failed.'); return; }
+        showAlert('Account created! Please sign in.', 'success');
+        setTimeout(() => switchTab('login'), 1500);
+      } catch {
+        showAlert('Network error. Is the server running?');
+      } finally {
+        setLoading('btn-register', false);
+      }
+    }
+
+    // Redirect if already logged in
+    if (sessionStorage.getItem('token')) window.location.href = '/dashboard';
+  </script>
+</body>
+</html>
