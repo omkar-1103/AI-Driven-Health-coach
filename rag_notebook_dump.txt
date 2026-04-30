@@ -1,0 +1,97 @@
+--- Cell 0 ---
+!pip install -U langchain langchain-community langchain-text-splitters faiss-cpu sentence-transformers transformers accelerate
+
+--- Cell 1 ---
+!pip install pypdf
+
+--- Cell 2 ---
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import FAISS
+from langchain_community.embeddings import HuggingFaceEmbeddings
+
+from transformers import pipeline
+from langchain_community.llms import HuggingFacePipeline
+
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnablePassthrough
+
+--- Cell 3 ---
+loader = PyPDFLoader("/content/health_guidlines.pdf")
+documents = loader.load()
+
+print("Total pages:", len(documents))
+
+--- Cell 4 ---
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=300,
+    chunk_overlap=50
+)
+
+docs = text_splitter.split_documents(documents)
+
+print("Total chunks:", len(docs))
+
+--- Cell 5 ---
+embeddings = HuggingFaceEmbeddings(
+    model_name="all-MiniLM-L6-v2"
+)
+
+--- Cell 6 ---
+vector_db = FAISS.from_documents(docs, embeddings)
+
+# Save (optional)
+vector_db.save_local("faiss_index")
+
+--- Cell 7 ---
+retriever = vector_db.as_retriever(search_kwargs={"k": 2})
+
+--- Cell 8 ---
+from transformers import pipeline
+from langchain_community.llms import HuggingFacePipeline
+
+pipe = pipeline(
+    "text-generation",
+    model="distilgpt2",
+    max_new_tokens=200
+)
+
+llm = HuggingFacePipeline(pipeline=pipe)
+
+--- Cell 9 ---
+prompt = ChatPromptTemplate.from_template("""
+Answer the question based only on the context below.
+
+Context:
+{context}
+
+Question:
+{question}
+
+Give a clear and structured answer.
+""")
+
+--- Cell 10 ---
+def format_docs(docs):
+    text = "\n\n".join(doc.page_content for doc in docs)
+    return text[:1000]   # ⬅️ truncate context
+
+--- Cell 11 ---
+rag_chain = (
+    {
+        "context": retriever | format_docs,
+        "question": RunnablePassthrough()
+    }
+    | prompt
+    | llm
+)
+
+--- Cell 12 ---
+query = "What are stroke warning signs?"
+response = rag_chain.invoke(query)
+
+print(response)
+
+--- Cell 13 ---
+
+
