@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Health Coach — Predictions</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    /* ── Predictions-specific styles ── */
+    .pred-main{max-width:1200px;margin:0 auto;padding:28px 28px 60px;display:flex;flex-direction:column;gap:32px;position:relative;z-index:1}
+    .page-title{font-size:1.5rem;font-weight:800;background:linear-gradient(135deg,var(--purple-lt),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .page-sub{color:var(--text-2);font-size:.85rem;margin-top:4px}
+    .pred-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+    @media(max-width:900px){.pred-grid{grid-template-columns:1fr}}
+
+    /* Cards */
+    .pred-card{border-radius:var(--radius-lg);padding:28px;display:flex;flex-direction:column;gap:20px}
+    .pred-card-header{display:flex;align-items:center;gap:14px}
+    .pred-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .pred-icon.hr{background:rgba(34,211,238,.12);color:var(--cyan);border:1px solid rgba(34,211,238,.25)}
+    .pred-icon.diab{background:rgba(251,191,36,.12);color:var(--amber);border:1px solid rgba(251,191,36,.25)}
+    .pred-card-title{font-size:1rem;font-weight:700;color:var(--text-1)}
+    .pred-card-sub{font-size:.75rem;color:var(--text-3);margin-top:3px}
+
+    /* Result box */
+    .result-box{border-radius:var(--radius-md);padding:20px;text-align:center;border:1px solid var(--border);background:rgba(255,255,255,.03);min-height:110px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;transition:all .4s}
+    .result-label{font-size:1.6rem;font-weight:800;letter-spacing:-.5px}
+    .result-conf{font-size:.78rem;color:var(--text-2)}
+    .result-sub{font-size:.75rem;color:var(--text-3)}
+    .result-box.low    {border-color:rgba(74,222,128,.35);background:rgba(74,222,128,.07)}
+    .result-box.medium {border-color:rgba(251,191,36,.35);background:rgba(251,191,36,.07)}
+    .result-box.high   {border-color:rgba(248,113,113,.35);background:rgba(248,113,113,.07)}
+    .result-box.negative{border-color:rgba(74,222,128,.35);background:rgba(74,222,128,.07)}
+    .result-box.positive{border-color:rgba(248,113,113,.35);background:rgba(248,113,113,.07)}
+    .label-low    {color:var(--green)}
+    .label-medium {color:var(--amber)}
+    .label-high   {color:var(--red)}
+    .label-negative{color:var(--green)}
+    .label-positive{color:var(--red)}
+
+    /* Wearable inputs display */
+    .wearable-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .w-chip{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+    .w-chip-label{font-size:.65rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em}
+    .w-chip-val{font-size:.95rem;font-weight:700;color:var(--text-1)}
+
+    /* Diabetes form */
+    .diab-form{display:flex;flex-direction:column;gap:14px}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media(max-width:500px){.form-row{grid-template-columns:1fr}}
+    .form-group{display:flex;flex-direction:column;gap:5px}
+    .form-label{font-size:.72rem;font-weight:500;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em}
+    .form-input{padding:9px 12px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-1);font-family:var(--font);font-size:.88rem;outline:none;transition:border-color .2s}
+    .form-input:focus{border-color:var(--amber)}
+    .form-input::placeholder{color:var(--text-3)}
+
+    /* Buttons */
+    .btn-predict-hr{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:linear-gradient(135deg,var(--cyan),var(--blue));border:none;border-radius:var(--radius-sm);color:#fff;font-family:var(--font);font-size:.9rem;font-weight:600;cursor:pointer;transition:opacity .2s,transform .1s;box-shadow:0 4px 20px rgba(34,211,238,.25)}
+    .btn-predict-hr:hover:not(:disabled){opacity:.88;transform:translateY(-1px)}
+    .btn-predict-hr:disabled{opacity:.5;cursor:not-allowed}
+    .btn-predict-diab{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:linear-gradient(135deg,var(--amber),#f97316);border:none;border-radius:var(--radius-sm);color:#111;font-family:var(--font);font-size:.9rem;font-weight:700;cursor:pointer;transition:opacity .2s,transform .1s;box-shadow:0 4px 20px rgba(251,191,36,.25)}
+    .btn-predict-diab:hover:not(:disabled){opacity:.88;transform:translateY(-1px)}
+    .btn-predict-diab:disabled{opacity:.5;cursor:not-allowed}
+    .btn-loader{width:16px;height:16px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+
+    /* History table */
+    .history-section{display:flex;flex-direction:column;gap:14px}
+    .history-title{font-size:.85rem;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em}
+    .history-table{width:100%;border-collapse:collapse;font-size:.78rem}
+    .history-table th{padding:8px 12px;text-align:left;color:var(--text-3);font-weight:500;border-bottom:1px solid var(--border)}
+    .history-table td{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--text-1)}
+    .history-table tr:last-child td{border-bottom:none}
+    .badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:.72rem;font-weight:600}
+    .badge-low,.badge-non-diabetic{background:rgba(74,222,128,.15);color:var(--green);border:1px solid rgba(74,222,128,.3)}
+    .badge-medium{background:rgba(251,191,36,.15);color:var(--amber);border:1px solid rgba(251,191,36,.3)}
+    .badge-high,.badge-diabetic{background:rgba(248,113,113,.15);color:var(--red);border:1px solid rgba(248,113,113,.3)}
+
+    .alert-msg{padding:10px 14px;border-radius:var(--radius-sm);font-size:.82rem;font-weight:500;background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.3);color:var(--red);display:none}
+    .alert-msg.show{display:block}
+    .spinner-placeholder{color:var(--text-3);font-size:.82rem}
+  </style>
+</head>
+<body class="dash-body">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <!-- HEADER -->
+  <header class="dash-header glass">
+    <div class="header-left">
+      <div class="brand-icon small">
+        <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
+          <path d="M16 4C16 4 6 10 6 18C6 23.52 10.48 28 16 28C21.52 28 26 23.52 26 18C26 10 16 4 16 4Z" fill="url(#hg3)"/>
+          <path d="M10 18L13 15L16 20L19 13L22 17" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <defs><linearGradient id="hg3" x1="6" y1="4" x2="26" y2="28" gradientUnits="userSpaceOnUse"><stop stop-color="#a855f7"/><stop offset="1" stop-color="#3b82f6"/></linearGradient></defs>
+        </svg>
+      </div>
+      <span class="brand-name small">AI Health Coach</span>
+    </div>
+    <div class="header-center">
+      <span class="live-badge"><span class="live-dot"></span>AI PREDICTIONS</span>
+    </div>
+    <div class="header-right">
+      <a href="/chat" class="btn-nav-predictions">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg>
+        AI Chat
+      </a>
+      <a href="/dashboard" class="btn-nav-predictions">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </a>
+      <div class="user-pill">
+        <div class="user-avatar" id="user-avatar">?</div>
+        <span id="user-name-header" class="user-name-text">—</span>
+      </div>
+      <button class="btn-logout" onclick="handleLogout()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logout
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="pred-main">
+    <div>
+      <h1 class="page-title">AI Health Predictions</h1>
+      <p class="page-sub">Real-time analysis powered by machine learning models trained on health data.</p>
+    </div>
+
+    <div class="pred-grid">
+
+      <!-- ── HEALTH RISK CARD ── -->
+      <div class="pred-card glass">
+        <div class="pred-card-header">
+          <div class="pred-icon hr">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          </div>
+          <div>
+            <div class="pred-card-title">Health Risk Prediction</div>
+            <div class="pred-card-sub">Uses your latest wearable sensor data automatically</div>
+          </div>
+        </div>
+
+        <!-- Live wearable inputs -->
+        <div>
+          <div class="history-title" style="margin-bottom:10px">Current Wearable Reading</div>
+          <div class="wearable-grid" id="wearable-display">
+            <div class="w-chip"><span class="w-chip-label">Heart Rate</span><span class="w-chip-val" id="wd-hr">—</span></div>
+            <div class="w-chip"><span class="w-chip-label">Temperature</span><span class="w-chip-val" id="wd-temp">—</span></div>
+            <div class="w-chip"><span class="w-chip-label">Blood Oxygen</span><span class="w-chip-val" id="wd-spo2">—</span></div>
+            <div class="w-chip"><span class="w-chip-label">Systolic BP</span><span class="w-chip-val" id="wd-sys">—</span></div>
+            <div class="w-chip"><span class="w-chip-label">Diastolic BP</span><span class="w-chip-val" id="wd-dia">—</span></div>
+            <div class="w-chip"><span class="w-chip-label">Step Count</span><span class="w-chip-val" id="wd-steps">—</span></div>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 10px;">
+          <label class="form-label" for="hr-activity">Current Activity Status</label>
+          <select id="hr-activity" class="form-input" style="cursor: pointer;">
+            <option value="Resting">Resting</option>
+            <option value="Walking" selected>Walking</option>
+            <option value="Running">Running</option>
+            <option value="Cycling">Cycling</option>
+          </select>
+        </div>
+
+        <!-- Result -->
+        <div class="result-box" id="hr-result-box">
+          <span class="spinner-placeholder">Run prediction to see result</span>
+        </div>
+
+        <div id="hr-alert" class="alert-msg"></div>
+        <button id="btn-hr" class="btn-predict-hr" onclick="predictHealthRisk()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <span class="btn-text">Run Health Risk Analysis</span>
+          <span class="btn-loader hidden"></span>
+        </button>
+
+        <!-- History -->
+        <div class="history-section" id="hr-history-wrap" style="display:none">
+          <div class="history-title">Recent Health Risk Predictions</div>
+          <table class="history-table">
+            <thead><tr><th>Time</th><th>HR</th><th>SpO₂</th><th>Steps</th><th>Result</th><th>Conf.</th></tr></thead>
+            <tbody id="hr-history-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── DIABETES CARD ── -->
+      <div class="pred-card glass">
+        <div class="pred-card-header">
+          <div class="pred-icon diab">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          </div>
+          <div>
+            <div class="pred-card-title">Diabetes Prediction</div>
+            <div class="pred-card-sub">Enter clinical parameters manually for assessment</div>
+          </div>
+        </div>
+
+        <form class="diab-form" id="diab-form" onsubmit="predictDiabetes(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Pregnancies</label>
+              <input id="d-pregnancies" type="number" min="0" max="20" step="1" class="form-input" placeholder="e.g. 2" required/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Glucose (mg/dL)</label>
+              <input id="d-glucose" type="number" min="0" max="300" step="1" class="form-input" placeholder="e.g. 120" required/>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Blood Pressure (mmHg)</label>
+              <input id="d-bp" type="number" min="0" max="200" step="1" class="form-input" placeholder="e.g. 72" required/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Skin Thickness (mm)</label>
+              <input id="d-skin" type="number" min="0" max="100" step="1" class="form-input" placeholder="e.g. 23" required/>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Insulin (µU/mL)</label>
+              <input id="d-insulin" type="number" min="0" max="900" step="1" class="form-input" placeholder="e.g. 80" required/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">BMI (kg/m²)</label>
+              <input id="d-bmi" type="number" min="10" max="70" step="0.1" class="form-input" placeholder="e.g. 28.5" required/>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Diabetes Pedigree Fn.</label>
+              <input id="d-dpf" type="number" min="0" max="3" step="0.001" class="form-input" placeholder="e.g. 0.351" required/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Age (years)</label>
+              <input id="d-age" type="number" min="1" max="120" step="1" class="form-input" placeholder="e.g. 31" required/>
+            </div>
+          </div>
+
+          <!-- Result -->
+          <div class="result-box" id="diab-result-box">
+            <span class="spinner-placeholder">Fill the form and submit</span>
+          </div>
+
+          <div id="diab-alert" class="alert-msg"></div>
+          <button id="btn-diab" type="submit" class="btn-predict-diab">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span class="btn-text">Predict Diabetes Risk</span>
+            <span class="btn-loader hidden"></span>
+          </button>
+        </form>
+
+        <!-- History -->
+        <div class="history-section" id="diab-history-wrap" style="display:none">
+          <div class="history-title">Recent Diabetes Predictions</div>
+          <table class="history-table">
+            <thead><tr><th>Time</th><th>Glucose</th><th>BMI</th><th>Age</th><th>Result</th><th>Conf.</th></tr></thead>
+            <tbody id="diab-history-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /pred-grid -->
+  </main>
+
+  <script>
+    const token    = sessionStorage.getItem('token');
+    const username = sessionStorage.getItem('username');
+    if (!token) window.location.href = '/';
+
+    const authHdr = () => ({ 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' });
+
+    // ── Header ────────────────────────────────────
+    document.getElementById('user-name-header').textContent = username;
+    document.getElementById('user-avatar').textContent = (username || '?')[0].toUpperCase();
+
+    // ── Load latest wearable data ─────────────────
+    async function loadWearable() {
+      try {
+        const res  = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.latest) return;
+        const d = data.latest;
+        document.getElementById('wd-hr').textContent    = d.heart_rate + ' bpm';
+        document.getElementById('wd-temp').textContent  = d.temperature + ' °C';
+        document.getElementById('wd-spo2').textContent  = d.blood_oxygen + '%';
+        document.getElementById('wd-sys').textContent   = d.bp_systolic + ' mmHg';
+        document.getElementById('wd-dia').textContent   = d.bp_diastolic + ' mmHg';
+        document.getElementById('wd-steps').textContent = d.step_count.toLocaleString();
+      } catch(e) { console.error(e); }
+    }
+    loadWearable();
+    setInterval(loadWearable, 5000);
+
+    // ── Load prediction history ───────────────────
+    async function loadHistory() {
+      try {
+        const res  = await fetch('/api/predict/history', { headers: { 'Authorization': `Bearer ${token}` } });
+        if (!res.ok) return;
+        const data = await res.json();
+        renderHrHistory(data.health_risk);
+        renderDiabHistory(data.diabetes);
+      } catch(e) {}
+    }
+
+    function fmtTs(ts) {
+      if (!ts.endsWith('Z')) ts += 'Z';
+      return new Date(ts).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true });
+    }
+
+    function badgeClass(label) {
+      const l = label.toLowerCase();
+      if (l.includes('high') || l.includes('diabetic')) return 'badge-high badge-diabetic';
+      if (l.includes('medium')) return 'badge-medium';
+      return 'badge-low badge-non-diabetic';
+    }
+
+    function renderHrHistory(rows) {
+      if (!rows || rows.length === 0) return;
+      document.getElementById('hr-history-wrap').style.display = 'flex';
+      document.getElementById('hr-history-body').innerHTML = rows.map(r => `
+        <tr>
+          <td>${fmtTs(r.timestamp)}</td>
+          <td>${r.heart_rate}</td>
+          <td>${r.blood_oxygen}%</td>
+          <td>${r.step_count.toLocaleString()}</td>
+          <td><span class="badge ${badgeClass(r.prediction)}">${r.prediction}</span></td>
+          <td>${r.confidence}%</td>
+        </tr>`).join('');
+    }
+
+    function renderDiabHistory(rows) {
+      if (!rows || rows.length === 0) return;
+      document.getElementById('diab-history-wrap').style.display = 'flex';
+      document.getElementById('diab-history-body').innerHTML = rows.map(r => `
+        <tr>
+          <td>${fmtTs(r.timestamp)}</td>
+          <td>${r.glucose}</td>
+          <td>${r.bmi}</td>
+          <td>${r.age}</td>
+          <td><span class="badge ${badgeClass(r.prediction)}">${r.prediction}</span></td>
+          <td>${r.confidence}%</td>
+        </tr>`).join('');
+    }
+
+    loadHistory();
+
+    // ── Helpers ───────────────────────────────────
+    function setLoading(btnId, on) {
+      const btn = document.getElementById(btnId);
+      btn.querySelector('.btn-text').classList.toggle('hidden', on);
+      btn.querySelector('.btn-loader').classList.toggle('hidden', !on);
+      btn.disabled = on;
+    }
+
+    function showAlert(id, msg) {
+      const el = document.getElementById(id);
+      el.textContent = msg; el.classList.add('show');
+    }
+    function clearAlert(id) { document.getElementById(id).classList.remove('show'); }
+
+    function renderHrResult(data) {
+      const box = document.getElementById('hr-result-box');
+      const label = data.prediction;
+      const cls   = label === 'Low Risk' ? 'low' : label === 'Medium Risk' ? 'medium' : 'high';
+      const lcls  = 'label-' + cls;
+      box.className = 'result-box ' + cls;
+      box.innerHTML = `
+        <span class="result-label ${lcls}">${label}</span>
+        <span class="result-conf">Confidence: <strong>${data.confidence}%</strong></span>
+        <span class="result-sub">Based on real-time wearable data</span>`;
+    }
+
+    function renderDiabResult(data) {
+      const box = document.getElementById('diab-result-box');
+      const label = data.prediction;
+      const cls   = label === 'Diabetic' ? 'positive' : 'negative';
+      const lcls  = 'label-' + cls;
+      box.className = 'result-box ' + cls;
+      box.innerHTML = `
+        <span class="result-label ${lcls}">${label}</span>
+        <span class="result-conf">Confidence: <strong>${data.confidence}%</strong></span>
+        <span class="result-sub">Based on submitted clinical values</span>`;
+    }
+
+    // ── Health Risk Predict ───────────────────────
+    async function predictHealthRisk() {
+      clearAlert('hr-alert');
+      setLoading('btn-hr', true);
+      const activity = document.getElementById('hr-activity').value;
+      try {
+        const res  = await fetch('/api/predict/health-risk', { 
+          method:'POST', 
+          headers: authHdr(),
+          body: JSON.stringify({ activity_status: activity })
+        });
+        const data = await res.json();
+        if (!res.ok) { showAlert('hr-alert', data.error || 'Prediction failed.'); return; }
+        renderHrResult(data);
+        loadHistory();
+      } catch { showAlert('hr-alert', 'Network error.'); }
+      finally  { setLoading('btn-hr', false); }
+    }
+
+    // ── Diabetes Predict ──────────────────────────
+    async function predictDiabetes(e) {
+      e.preventDefault();
+      clearAlert('diab-alert');
+      setLoading('btn-diab', true);
+      const body = {
+        pregnancies:       document.getElementById('d-pregnancies').value,
+        glucose:           document.getElementById('d-glucose').value,
+        blood_pressure:    document.getElementById('d-bp').value,
+        skin_thickness:    document.getElementById('d-skin').value,
+        insulin:           document.getElementById('d-insulin').value,
+        bmi:               document.getElementById('d-bmi').value,
+        diabetes_pedigree: document.getElementById('d-dpf').value,
+        age:               document.getElementById('d-age').value,
+      };
+      try {
+        const res  = await fetch('/api/predict/diabetes', { method:'POST', headers: authHdr(), body: JSON.stringify(body) });
+        const data = await res.json();
+        if (!res.ok) { showAlert('diab-alert', data.error || 'Prediction failed.'); return; }
+        renderDiabResult(data);
+        loadHistory();
+      } catch { showAlert('diab-alert', 'Network error.'); }
+      finally  { setLoading('btn-diab', false); }
+    }
+
+    async function handleLogout() {
+      try { await fetch('/api/logout', { method:'POST', headers: { 'Authorization': `Bearer ${token}` } }); }
+      finally { sessionStorage.clear(); window.location.href = '/'; }
+    }
+  </script>
+</body>
+</html>
